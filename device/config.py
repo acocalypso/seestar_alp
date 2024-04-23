@@ -73,7 +73,7 @@ class Config:
     can_reverse: bool = get_toml('device', 'can_reverse')
     step_size: float = get_toml('device', 'step_size')
     steps_per_sec: int = get_toml('device', 'steps_per_sec')
-    seestars = _dict['seestars']
+    dwarfs = _dict['dwarfs']
     # ---------------
     # Logging Section
     # ---------------

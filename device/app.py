@@ -222,10 +222,10 @@ def main():
     set_shr_logger(logger)
 
     print()
-    print(Config.seestars)
+    print(Config.dwarfs)
     print()
-    for dev in Config.seestars:
-        telescope.start_seestar_device(logger, dev['name'], dev['ip_address'], 4700, dev['device_num'])
+    for dev in Config.dwarfs:
+        telescope.start_dwarf_device(logger, dev['name'], dev['ip_address'], 9900, dev['device_num'])
 
     #########################
     # FOR EACH ASCOM DEVICE #
@@ -278,8 +278,8 @@ def main():
             httpd.serve_forever()
     except KeyboardInterrupt:
         print("Keyboard interupt. Server shutting down.")
-        for dev in Config.seestars:
-            telescope.end_seestar_device(dev['device_num'])
+        for dev in Config.dwarfs:
+            telescope.end_dwarf_device(dev['device_num'])
         httpd.server_close()
 
 # ========================

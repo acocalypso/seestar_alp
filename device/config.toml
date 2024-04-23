@@ -19,22 +19,8 @@ log_to_stdout = false
 max_size_mb = 5
 num_keep_logs = 10
 
-#[[seestars]]
-#name = "Seestar Alpha"
-#ip_address = "192.168.110.30"
-#device_num = 1
-
-
-[[seestars]]
-name = "Seestar Beta"
-ip_address = "192.168.110.36"
-#ip_address = "192.168.8.150"
-device_num = 2
-
-
-#[[seestars]]
-#name = "Seestar Gamma"
-#ip_address = "192.168.110.238"
-#ip_address = "192.168.8.117"
-#device_num = 3
+[[dwarfs]]
+name = "DWARF II"
+ip_address = "192.168.178.56"
+device_num = 1
 

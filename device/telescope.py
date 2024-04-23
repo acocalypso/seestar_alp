@@ -17,7 +17,7 @@ from logging import Logger
 from shr import PropertyResponse, MethodResponse, PreProcessRequest, \
                 get_request_field, to_bool
 from exceptions import *        # Nothing but exception classes
-from seestar_device import Seestar
+from dwarf_device import Dwarf
 from alpaca.telescope import *
 import json
 
@@ -40,25 +40,25 @@ maxdev = 10                     # Single instance
 ## EDIT FOR YOUR DEVICE ##
 class TelescopeMetadata:
     """ Metadata describing the Telescope Device. Edit for your device"""
-    Name = 'Seestar Smart Telescope'
+    Name = 'Dwarflab DWARF II Smart Telescope'
     Version = '1.0a1'
-    Description = 'Alpaca Driver for Seestar S50 Smart Telescope'
+    Description = 'Alpaca Driver for DWARFII Smart Telescope'
     DeviceType = 'Telescope'
-    DeviceID = '2ea274e1-cd4d-4c6a-85f3-e7ffd4c0676a'   # https://guidgenerator.com/online-guid-generator.aspx
-    Info = 'Alpaca Driver for Seestar S50 Smart Telescope\nImplements ITelescope\nASCOM Initiative'
+    DeviceID = '844fdb02-4bc3-42ea-a4b7-66e1601089cb'   # https://guidgenerator.com/online-guid-generator.aspx
+    Info = 'Alpaca Driver for DWARF II Smart Telescope\nImplements ITelescope\nASCOM Initiative'
     MaxDeviceNumber = maxdev
     InterfaceVersion = 3                            # ITelescopeV3
 
-seestar_dev = {}
+dwarf_dev = {}
 # At app init not import :-)
-def start_seestar_device(logger: logger, name: str, ip_address: str, port: int, device_num: int): # type: ignore
+def start_dwarf_device(logger: logger, name: str, ip_address: str, port: int, device_num: int): # type: ignore
     logger = logger
-    global seestar_dev
-    seestar_dev[device_num] = Seestar(logger, ip_address, port, name, device_num, True)
-    seestar_dev[device_num].start_watch_thread()
+    global dwarf_dev
+    dwarf_dev[device_num] = Dwarf(logger, ip_address, port, name, device_num, True)
+    dwarf_dev[device_num].start_watch_thread()
 
-def end_seestar_device(device_num: int):
-    seestar_dev[device_num].end_watch_thread()
+def end_dwarf_device(device_num: int):
+    dwarf_dev[device_num].end_watch_thread()
 
 
 # --------------------
@@ -68,11 +68,11 @@ def end_seestar_device(device_num: int):
 @before(PreProcessRequest(maxdev))
 class action:
     def on_put(self, req: Request, resp: Response, devnum: int):
-        if devnum not in seestar_dev or not seestar_dev[devnum].is_connected:
+        if devnum not in dwarf_dev or not dwarf_dev[devnum].is_connected:
             err = DevNotConnectedException("device not connected.")
             resp.text = PropertyResponse(None, req, err).json
             return
-        cur_dev = seestar_dev[devnum]
+        cur_dev = dwarf_dev[devnum]
         action_name = get_request_field('Action', req)      # Raises 400 bad request if missing
         parameters = get_request_field('Parameters', req)
 
@@ -148,7 +148,7 @@ class commandstring:
 @before(PreProcessRequest(maxdev))
 class connected:
     def on_get(self, req: Request, resp: Response, devnum: int):
-        is_conn = seestar_dev[devnum].is_connected
+        is_conn = dwarf_dev[devnum].is_connected
         resp.text = PropertyResponse(is_conn, req).json
 
     def on_put(self, req: Request, resp: Response, devnum: int):
@@ -156,9 +156,9 @@ class connected:
         conn = to_bool(conn_str)              # Raises 400 Bad Request if str to bool fails
         try:
             if conn:
-                seestar_dev[devnum].start_watch_thread()
+                dwarf_dev[devnum].start_watch_thread()
             else:
-                seestar_dev[devnum].end_watch_thread()
+                dwarf_dev[devnum].end_watch_thread()
             resp.text = MethodResponse(req).json
         except Exception as ex:
             resp.text = MethodResponse(req, DriverException(0x500, 'Telescope.Connected failed', ex)).json
@@ -197,7 +197,7 @@ class supportedactions:
 class alignmentmode:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -214,7 +214,7 @@ class alignmentmode:
 class altitude:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -231,7 +231,7 @@ class altitude:
 class aperturearea:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -248,7 +248,7 @@ class aperturearea:
 class aperturediameter:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -265,7 +265,7 @@ class aperturediameter:
 class athome:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -282,7 +282,7 @@ class athome:
 class atpark:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -299,7 +299,7 @@ class atpark:
 class azimuth:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -316,7 +316,7 @@ class azimuth:
 class canfindhome:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -333,7 +333,7 @@ class canfindhome:
 class canpark:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -350,7 +350,7 @@ class canpark:
 class canpulseguide:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -367,7 +367,7 @@ class canpulseguide:
 class cansetdeclinationrate:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -384,7 +384,7 @@ class cansetdeclinationrate:
 class cansetguiderates:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -401,7 +401,7 @@ class cansetguiderates:
 class cansetpark:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -418,7 +418,7 @@ class cansetpark:
 class cansetpierside:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -435,7 +435,7 @@ class cansetpierside:
 class cansetrightascensionrate:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -452,7 +452,7 @@ class cansetrightascensionrate:
 class cansettracking:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -469,7 +469,7 @@ class cansettracking:
 class canslew:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -486,7 +486,7 @@ class canslew:
 class canslewaltaz:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -503,7 +503,7 @@ class canslewaltaz:
 class canslewaltazasync:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -520,7 +520,7 @@ class canslewaltazasync:
 class canslewasync:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -537,7 +537,7 @@ class canslewasync:
 class cansync:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -554,7 +554,7 @@ class cansync:
 class cansyncaltaz:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -571,7 +571,7 @@ class cansyncaltaz:
 class canunpark:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -588,13 +588,13 @@ class canunpark:
 class declination:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
         try:
             # ----------------------
-            val = seestar_dev[devnum].dec
+            val = dwarf_dev[devnum].dec
             # ----------------------
             resp.text = PropertyResponse(val, req).json
         except Exception as ex:
@@ -605,7 +605,7 @@ class declination:
 class declinationrate:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -619,7 +619,7 @@ class declinationrate:
                             DriverException(0x500, 'Telescope.Declinationrate failed', ex)).json
 
     def on_put(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -644,7 +644,7 @@ class declinationrate:
 class doesrefraction:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -658,7 +658,7 @@ class doesrefraction:
                             DriverException(0x500, 'Telescope.Doesrefraction failed', ex)).json
 
     def on_put(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -678,7 +678,7 @@ class doesrefraction:
 class equatorialsystem:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -695,7 +695,7 @@ class equatorialsystem:
 class focallength:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -712,7 +712,7 @@ class focallength:
 class guideratedeclination:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -726,7 +726,7 @@ class guideratedeclination:
                             DriverException(0x500, 'Telescope.Guideratedeclination failed', ex)).json
 
     def on_put(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -751,7 +751,7 @@ class guideratedeclination:
 class guideraterightascension:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -765,7 +765,7 @@ class guideraterightascension:
                             DriverException(0x500, 'Telescope.Guideraterightascension failed', ex)).json
 
     def on_put(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -790,7 +790,7 @@ class guideraterightascension:
 class ispulseguiding:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -807,13 +807,13 @@ class ispulseguiding:
 class rightascension:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
         try:
             # ----------------------
-            val = seestar_dev[devnum].ra
+            val = dwarf_dev[devnum].ra
             # ----------------------
             resp.text = PropertyResponse(val, req).json
         except Exception as ex:
@@ -824,7 +824,7 @@ class rightascension:
 class rightascensionrate:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -838,7 +838,7 @@ class rightascensionrate:
                             DriverException(0x500, 'Telescope.Rightascensionrate failed', ex)).json
 
     def on_put(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -863,7 +863,7 @@ class rightascensionrate:
 class sideofpier:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -877,7 +877,7 @@ class sideofpier:
                             DriverException(0x500, 'Telescope.Sideofpier failed', ex)).json
 
     def on_put(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -902,7 +902,7 @@ class sideofpier:
 class siderealtime:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -919,13 +919,13 @@ class siderealtime:
 class siteelevation:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
         try:
             # ----------------------
-            val = seestar_dev[devnum].site_elevation
+            val = dwarf_dev[devnum].site_elevation
             # ----------------------
             resp.text = PropertyResponse(val, req).json
         except Exception as ex:
@@ -933,7 +933,7 @@ class siteelevation:
                             DriverException(0x500, 'Telescope.Siteelevation failed', ex)).json
 
     def on_put(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -946,7 +946,7 @@ class siteelevation:
             return
         ### RANGE CHECK AS NEEDED ###         # Raise Alpaca InvalidValueException with details!
         try:
-            seestar_dev[devnum].site_elevation = siteelevation
+            dwarf_dev[devnum].site_elevation = siteelevation
             resp.text = MethodResponse(req).json
         except Exception as ex:
             resp.text = MethodResponse(req,
@@ -956,13 +956,13 @@ class siteelevation:
 class sitelatitude:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
         try:
             # ----------------------
-            val = seestar_dev[devnum].site_latitude
+            val = dwarf_dev[devnum].site_latitude
             # ----------------------
             resp.text = PropertyResponse(val, req).json
         except Exception as ex:
@@ -970,7 +970,7 @@ class sitelatitude:
                             DriverException(0x500, 'Telescope.Sitelatitude failed', ex)).json
 
     def on_put(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -984,7 +984,7 @@ class sitelatitude:
         ### RANGE CHECK AS NEEDED ###         # Raise Alpaca InvalidValueException with details!
         try:
             # -----------------------------
-            seestar_dev[devnum].site_latitude = sitelatitude
+            dwarf_dev[devnum].site_latitude = sitelatitude
             # -----------------------------
             resp.text = MethodResponse(req).json
         except Exception as ex:
@@ -995,13 +995,13 @@ class sitelatitude:
 class sitelongitude:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
         try:
             # ----------------------
-            val = seestar_dev[devnum].site_longitude
+            val = dwarf_dev[devnum].site_longitude
             # ----------------------
             resp.text = PropertyResponse(val, req).json
         except Exception as ex:
@@ -1009,7 +1009,7 @@ class sitelongitude:
                             DriverException(0x500, 'Telescope.Sitelongitude failed', ex)).json
 
     def on_put(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -1023,7 +1023,7 @@ class sitelongitude:
         ### RANGE CHECK AS NEEDED ###         # Raise Alpaca InvalidValueException with details!
         try:
             # -----------------------------
-            seestar_dev[devnum].site_longitude = sitelongitude
+            dwarf_dev[devnum].site_longitude = sitelongitude
             # -----------------------------
             resp.text = MethodResponse(req).json
         except Exception as ex:
@@ -1034,13 +1034,13 @@ class sitelongitude:
 class slewing:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
         try:
             # ----------------------
-            val = seestar_dev[devnum].is_slewing
+            val = dwarf_dev[devnum].is_slewing
             # ----------------------
             resp.text = PropertyResponse(val, req).json
         except Exception as ex:
@@ -1051,7 +1051,7 @@ class slewing:
 class slewsettletime:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -1065,7 +1065,7 @@ class slewsettletime:
                             DriverException(0x500, 'Telescope.Slewsettletime failed', ex)).json
 
     def on_put(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -1090,13 +1090,13 @@ class slewsettletime:
 class targetdeclination:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
         try:
             # ----------------------
-            val = seestar_dev[devnum].target_dec
+            val = dwarf_dev[devnum].target_dec
             # ----------------------
             resp.text = PropertyResponse(val, req).json
         except Exception as ex:
@@ -1104,7 +1104,7 @@ class targetdeclination:
                             DriverException(0x500, 'Telescope.Targetdeclination failed', ex)).json
 
     def on_put(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -1118,7 +1118,7 @@ class targetdeclination:
         ### RANGE CHECK AS NEEDED ###         # Raise Alpaca InvalidValueException with details!
         try:
             # -----------------------------
-            seestar_dev[devnum].target_dec = targetdeclination
+            dwarf_dev[devnum].target_dec = targetdeclination
             # -----------------------------
             resp.text = MethodResponse(req).json
         except Exception as ex:
@@ -1129,13 +1129,13 @@ class targetdeclination:
 class targetrightascension:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
         try:
             # ----------------------
-            val = seestar_dev[devnum].target_ra
+            val = dwarf_dev[devnum].target_ra
             # ----------------------
             resp.text = PropertyResponse(val, req).json
         except Exception as ex:
@@ -1143,7 +1143,7 @@ class targetrightascension:
                             DriverException(0x500, 'Telescope.Targetrightascension failed', ex)).json
 
     def on_put(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -1157,7 +1157,7 @@ class targetrightascension:
         ### RANGE CHECK AS NEEDED ###         # Raise Alpaca InvalidValueException with details!
         try:
             # -----------------------------
-            seestar_dev[devnum].target_ra = targetrightascension
+            dwarf_dev[devnum].target_ra = targetrightascension
             # -----------------------------
             resp.text = MethodResponse(req).json
         except Exception as ex:
@@ -1168,7 +1168,7 @@ class targetrightascension:
 class tracking:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -1182,7 +1182,7 @@ class tracking:
                             DriverException(0x500, 'Telescope.Tracking failed', ex)).json
 
     def on_put(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -1202,7 +1202,7 @@ class tracking:
 class trackingrate:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -1216,7 +1216,7 @@ class trackingrate:
                             DriverException(0x500, 'Telescope.Trackingrate failed', ex)).json
 
     def on_put(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -1241,7 +1241,7 @@ class trackingrate:
 class trackingrates:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -1258,13 +1258,13 @@ class trackingrates:
 class utcdate:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
         try:
             # ----------------------
-            val = seestar_dev[devnum].utcdate
+            val = dwarf_dev[devnum].utcdate
             # ----------------------
             resp.text = PropertyResponse(val, req).json
         except Exception as ex:
@@ -1272,7 +1272,7 @@ class utcdate:
                             DriverException(0x500, 'Telescope.Utcdate failed', ex)).json
 
     def on_put(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -1297,13 +1297,13 @@ class utcdate:
 class abortslew:
 
     def on_put(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
         try:
             # -----------------------------
-            seestar_dev[devnum].stop_slew()
+            dwarf_dev[devnum].stop_slew()
             # -----------------------------
             resp.text = MethodResponse(req).json
         except Exception as ex:
@@ -1314,7 +1314,7 @@ class abortslew:
 class axisrates:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -1331,7 +1331,7 @@ class axisrates:
 class canmoveaxis:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -1348,7 +1348,7 @@ class canmoveaxis:
 class destinationsideofpier:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -1365,7 +1365,7 @@ class destinationsideofpier:
 class findhome:
 
     def on_put(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -1382,7 +1382,7 @@ class findhome:
 class moveaxis:
 
     def on_put(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -1404,7 +1404,7 @@ class moveaxis:
         ### RANGE CHECK AS NEEDED ###         # Raise Alpaca InvalidValueException with details!
         try:
             # -----------------------------
-            seestar_dev[devnum].move_scope(0, rate)
+            dwarf_dev[devnum].move_scope(0, rate)
             # -----------------------------
             resp.text = MethodResponse(req).json
         except Exception as ex:
@@ -1415,7 +1415,7 @@ class moveaxis:
 class park:
 
     def on_put(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -1432,7 +1432,7 @@ class park:
 class pulseguide:
 
     def on_put(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -1465,7 +1465,7 @@ class pulseguide:
 class setpark:
 
     def on_put(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -1482,7 +1482,7 @@ class setpark:
 class slewtoaltaz:
 
     def on_put(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -1515,7 +1515,7 @@ class slewtoaltaz:
 class slewtoaltazasync:
 
     def on_put(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -1548,7 +1548,7 @@ class slewtoaltazasync:
 class slewtocoordinates:
 
     def on_put(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -1570,7 +1570,7 @@ class slewtocoordinates:
         ### RANGE CHECK AS NEEDED ###       # Raise Alpaca InvalidValueException with details!
         try:
             # -----------------------------
-            seestar_dev[devnum].goto_target({'ra':rightascension, 'dec':declination, 'target_name':"unknown"})
+            dwarf_dev[devnum].goto_target({'ra':rightascension, 'dec':declination, 'target_name':"unknown"})
             # -----------------------------
             resp.text = MethodResponse(req).json
         except Exception as ex:
@@ -1581,7 +1581,7 @@ class slewtocoordinates:
 class slewtocoordinatesasync:
 
     def on_put(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -1603,7 +1603,7 @@ class slewtocoordinatesasync:
         ### RANGE CHECK AS NEEDED ###       # Raise Alpaca InvalidValueException with details!
         try:
             # -----------------------------
-            seestar_dev[devnum].goto_target({'ra':rightascension, 'dec':declination, 'target_name':"unknown"})
+            dwarf_dev[devnum].goto_target({'ra':rightascension, 'dec':declination, 'target_name':"unknown"})
             # -----------------------------
             resp.text = MethodResponse(req).json
         except Exception as ex:
@@ -1614,13 +1614,13 @@ class slewtocoordinatesasync:
 class slewtotarget:
 
     def on_put(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
         try:
             # -----------------------------
-            seestar_dev[devnum].goto_target({'ra':seestar_dev[devnum].target_ra, 'dec':seestar_dev[devnum].target_dec, 'target_name':"unknown"})
+            dwarf_dev[devnum].goto_target({'ra':dwarf_dev[devnum].target_ra, 'dec':dwarf_dev[devnum].target_dec, 'target_name':"unknown"})
             # -----------------------------
             resp.text = MethodResponse(req).json
         except Exception as ex:
@@ -1631,13 +1631,13 @@ class slewtotarget:
 class slewtotargetasync:
 
     def on_put(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
         try:
             # -----------------------------
-            seestar_dev[devnum].goto_target({'ra':seestar_dev[devnum].target_ra, 'dec':seestar_dev[devnum].target_dec, 'target_name':"unknown"})
+            dwarf_dev[devnum].goto_target({'ra':dwarf_dev[devnum].target_ra, 'dec':dwarf_dev[devnum].target_dec, 'target_name':"unknown"})
             # -----------------------------
             resp.text = MethodResponse(req).json
         except Exception as ex:
@@ -1648,7 +1648,7 @@ class slewtotargetasync:
 class synctoaltaz:
 
     def on_put(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -1681,7 +1681,7 @@ class synctoaltaz:
 class synctocoordinates:
 
     def on_put(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -1703,7 +1703,7 @@ class synctocoordinates:
         ### RANGE CHECK AS NEEDED ###       # Raise Alpaca InvalidValueException with details!
         try:
             # -----------------------------
-            seestar_dev[devnum].sync_target([rightascension, declination])
+            dwarf_dev[devnum].sync_target([rightascension, declination])
             # -----------------------------
             resp.text = MethodResponse(req).json
         except Exception as ex:
@@ -1714,7 +1714,7 @@ class synctocoordinates:
 class synctotarget:
 
     def on_put(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
@@ -1731,13 +1731,13 @@ class synctotarget:
 class unpark:
 
     def on_put(self, req: Request, resp: Response, devnum: int):
-        if not seestar_dev[devnum].is_connected:
+        if not dwarf_dev[devnum].is_connected:
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
         try:
             # -----------------------------
-            # seestar_dev[devnum].sync_target([seestar_dev[devnum].target_ra, seestar_dev[devnum].target_dec])
+            # dwarf_dev[devnum].sync_target([dwarf_dev[devnum].target_ra, dwarf_dev[devnum].target_dec])
             # -----------------------------
             resp.text = MethodResponse(req).json
         except Exception as ex:
